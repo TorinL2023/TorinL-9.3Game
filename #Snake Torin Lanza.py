@@ -8,11 +8,11 @@ score = 0
 high_score = 0
 
 
-wn = turtle.Screen()
-wn.title("Snake Game")
-wn.bgcolor("blue")
-wn.setup(width=600, height=600)
-wn.tracer(0)
+game = turtle.Screen()
+game.title("Snake Game")
+game.bgcolor("blue")
+game.setup(width=600, height=600)
+game.tracer(0)
 
 head = turtle.Turtle()
 head.shape("square")
@@ -76,17 +76,17 @@ def move():
 		head.setx(x+20)
 
 
-wn.listen()
-wn.onkeypress(group, "w")
-wn.onkeypress(godown, "s")
-wn.onkeypress(goleft, "a")
-wn.onkeypress(goright, "d")
+game.listen()
+game.onkeypress(group, "w")
+game.onkeypress(godown, "s")
+game.onkeypress(goleft, "a")
+game.onkeypress(goright, "d")
 
 segments = []
 
 
 while True:
-	wn.update()
+	game.update()
 	if head.xcor() > 290 or head.xcor() < -290 or head.ycor() > 290 or head.ycor() < -290:
 		time.sleep(1)
 		head.goto(0, 0)
@@ -146,4 +146,4 @@ while True:
 				score, high_score), align="center", font=("candara", 24, "bold"))
 	time.sleep(delay)
 
-wn.mainloop()
+game.mainloop()
