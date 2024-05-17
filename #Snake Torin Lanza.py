@@ -1,153 +1,216 @@
-import turtle
-import time
-import random
+from turtle import Screen, Turtle
+from random import randint
 
-delay = 0.1
-score = 0
-high_score = 0
+def draw_arena():
+    drawer = Turtle()
+    drawer.speed(0)
+    drawer.hideturtle()
+    drawer.penup()
+    drawer.goto(-250, 250)
+    drawer.color("light blue")
+    drawer.pendown()
+    drawer.begin_fill()
+    for _ in range(4):
+        drawer.forward(500)
+        drawer.right(90)
+    drawer.end_fill()
 
-game = turtle.Screen()
-game.title("Snake Game")
-game.bgcolor("blue")
-game.setup(width=600, height=600)
-game.tracer(0)
 
-game.register_shape("snake_headUp.gif")
-game.register_shape("snake_headDown.gif")
-game.register_shape("snake_headLeft.gif")
-game.register_shape("snake_headRight.gif")
+class Tank(Turtle):
+    max_missiles = 0
 
-head = turtle.Turtle()
-head.shape("snake_headUp.gif")
-head.color("white")
-head.penup()
-head.goto(0, 0)
-head.direction = "stop"
 
-game.register_shape("apple.gif")
-food = turtle.Turtle()
-food.shape("apple.gif")
-food.speed(0)
-food.color("red")
-food.penup()
-food.goto(0, 100)
+    def __init__(self, x_start, y_start, color, left_key, right_key, fire_key):
+        super().__init__()
+        self.shape("turtle")
+        self.color(color)
+        self.penup()
+        self.goto(x_start, y_start)
+        self.left_key = left_key
+        self.right_key = right_key
+        self.fire_key = fire_key
+        self.missiles = []
 
-pen = turtle.Turtle()
-pen.speed(0)
-pen.shape("square")
-pen.color("white")
-pen.penup()
-pen.hideturtle()
-pen.goto(0, 250)
-pen.write("Score : 0 High Score : 0", align="center",
-          font=("candara", 24, "bold"))
 
-colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet']
-color_index = 0
+    def advance(self):
+        self.forward(5)
+        self.keep_in_bounds()
 
-def group():
-    if head.direction != "down":
-        head.direction = "up"
-        head.shape("snake_headUp.gif")
 
-def godown():
-    if head.direction != "up":
-        head.direction = "down"
-        head.shape("snake_headDown.gif")
+    def keep_in_bounds(self):
+        x, y = self.position()
+        if not (-240 < x < 240 and -240 < y < 240):
+            self.undo()
+            self.left(180)
 
-def goleft():
-    if head.direction != "right":
-        head.direction = "left"
-        head.shape("snake_headLeft.gif")
 
-def goright():
-    if head.direction != "left":
-        head.direction = "right"
-        head.shape("snake_headRight.gif")
+    def rotate_left(self):
+        self.left(10)
 
-def move():
-    if head.direction == "up":
-        head.sety(head.ycor() + 20)
-    if head.direction == "down":
-        head.sety(head.ycor() - 20)
-    if head.direction == "left":
-        head.setx(head.xcor() - 20)
-    if head.direction == "right":
-        head.setx(head.xcor() + 20)
 
-game.listen()
-game.onkeypress(group, "w")
-game.onkeypress(godown, "s")
-game.onkeypress(goleft, "a")
-game.onkeypress(goright, "d")
+    def rotate_right(self):
+        self.right(10)
 
-segments = []
 
-while True:
-    game.update()
-    if head.xcor() > 290 or head.xcor() < -290 or head.ycor() > 290 or head.ycor() < -290:
-        time.sleep(1)
-        head.goto(0, 0)
-        head.direction = "stop"
-        for segment in segments:
-            segment.goto(1000, 1000)
-        segments.clear()
-        score = 0
-        delay = 0.1
-        pen.clear()
-        pen.write("Score : {} High Score : {} ".format(
-            score, high_score), align="center", font=("candara", 24, "bold"))
-    
-    if head.distance(food) < 20:
-        x = random.randint(-270, 270)
-        y = random.randint(-270, 270)
-        food.goto(x, y)
+    def fire(self):
+        if Tank.max_missiles < 10:
+            missile = Missile(self)
+            self.missiles.append(missile)
+            Tank.max_missiles += 1
 
-        new_segment = turtle.Turtle()
-        new_segment.speed(0)
-        new_segment.shape("circle")
-        new_segment.color(colors[color_index])
-        color_index = (color_index + 1) % len(colors)
-        new_segment.penup()
-        new_segment.goto(0, 0)
-        segments.append(new_segment)
-        delay -= 0.001
-        score += 10
-        if score > high_score:
-            high_score = score
-        pen.clear()
-        pen.write("Score : {} High Score : {} ".format(
-            score, high_score), align="center", font=("candara", 24, "bold"))
-    
-    for index in range(len(segments) - 1, 0, -1):
-        x = segments[index - 1].xcor()
-        y = segments[index - 1].ycor()
-        segments[index].goto(x, y)
-        segments[index].color("black", colors[(index + color_index) % len(colors)])
-    
-    if len(segments) > 0:
-        x = head.xcor()
-        y = head.ycor()
-        segments[0].goto(x, y)
-        segments[0].color("black", colors[color_index])
 
-    move()
+class Missile(Turtle):
+    def __init__(self, shooter):
+        super().__init__()
+        self.hideturtle()
+        self.shape("triangle")
+        self.color("orange")
+        self.penup()
+        self.goto(shooter.xcor(), shooter.ycor())
+        self.setheading(shooter.heading())
+        self.showturtle()
 
-    for segment in segments:
-        if segment.distance(head) < 20:
-            time.sleep(1)
-            head.goto(0, 0)
-            head.direction = "stop"
-            for segment in segments:
-                segment.goto(1000, 1000)
-            segments.clear()
 
-            score = 0
-            delay = 0.1
-            pen.clear()
-            pen.write("Score : {} High Score : {} ".format(
-                score, high_score), align="center", font=("candara", 24, "bold"))
+    def move(self):
+        self.forward(15)
 
-    time.sleep(delay)
 
-game.mainloop()
+class Treasure(Turtle):
+    def __init__(self):
+        super().__init__()
+        self.shape("circle")
+        self.color("purple")
+        self.penup()
+        self.speed(0)
+        self.reposition()
+
+
+    def reposition(self):
+        self.goto(randint(-240, 240), randint(-240, 240))
+
+
+class Adversary(Turtle):
+    def __init__(self, target):
+        super().__init__()
+        self.shape("turtle")
+        self.color("yellow")
+        self.penup()
+        self.speed(1)
+        self.target = target
+        self.goto(randint(-240, 240), randint(-240, 240))
+
+
+    def chase(self):
+        self.setheading(self.towards(self.target))
+        self.forward(2)
+
+
+def check_treasure_collision(tank, treasure, adversaries):
+    if tank.distance(treasure) < 20:
+        treasure.reposition()
+        adversaries.append(Adversary(tank))
+        adversaries.append(Adversary(tank))
+
+
+def check_missile_collision(missile, adversaries):
+    for adversary in adversaries:
+        if missile.distance(adversary) < 20:
+            missile.hideturtle()
+            adversaries.remove(adversary)
+            adversary.hideturtle()
+            Tank.max_missiles -= 1
+            return True
+    return False
+
+
+def check_adversary_collision(tank, adversaries):
+    for adversary in adversaries:
+        if adversary.distance(tank) < 20:
+            return True
+    return False
+
+
+def announce_winner(color):
+    announcer = Turtle()
+    announcer.hideturtle()
+    announcer.color(color)
+    announcer.penup()
+    announcer.goto(0, 0)
+    announcer.write(f"{color.upper()} Wins!", align="center", font=("Arial", 24, "bold"))
+
+
+def main():
+    screen = Screen()
+    screen.bgcolor("black")
+    screen.setup(width=500, height=500)
+
+
+    draw_arena()
+
+
+    tank1 = Tank(-100, 0, "cyan", "Left", "Right", "Up")
+    tank2 = Tank(100, 0, "magenta", "a", "d", "w")
+
+
+    treasure = Treasure()
+
+
+    adversaries = []
+
+
+    screen.listen()
+    screen.onkeypress(tank1.rotate_left, tank1.left_key)
+    screen.onkeypress(tank1.rotate_right, tank1.right_key)
+    screen.onkeypress(tank1.fire, tank1.fire_key)
+    screen.onkeypress(tank2.rotate_left, tank2.left_key)
+    screen.onkeypress(tank2.rotate_right, tank2.right_key)
+    screen.onkeypress(tank2.fire, tank2.fire_key)
+
+
+    game_active = True
+    while game_active:
+        tank1.advance()
+        tank2.advance()
+
+
+        for tank in [tank1, tank2]:
+            for missile in tank.missiles:
+                missile.move()
+                if abs(missile.xcor()) > 250 or abs(missile.ycor()) > 250:
+                    missile.hideturtle()
+                    tank.missiles.remove(missile)
+                    Tank.max_missiles -= 1
+                if check_missile_collision(missile, adversaries):
+                    tank.missiles.remove(missile)
+
+
+            check_treasure_collision(tank, treasure, adversaries)
+
+
+        for adversary in adversaries:
+            adversary.chase()
+
+
+        if check_adversary_collision(tank1, adversaries):
+            announce_winner(tank2.color()[0])
+            game_active = False
+
+
+        if check_adversary_collision(tank2, adversaries):
+            announce_winner(tank1.color()[0])
+            game_active = False
+
+
+        screen.update()
+
+
+    screen.mainloop()
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
